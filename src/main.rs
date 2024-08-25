@@ -44,17 +44,28 @@ fn main() -> Result<()> {
         .read_to_string(&mut input)
         .context("Failed to read from stdin")?;
 
-    // Save the stdin data to "llm2fs_last_changes.txt"
-    fs::write("llm2fs_last_changes.txt", &input)
-        .context("Failed to save stdin data to llm2fs_last_changes.txt")?;
+    let input = input
+        .split_once("{")
+        .map(|(_, v)| "{".to_string() + v)
+        .unwrap_or(input);
+
+    // Save the stdin data to a file in the llm2fs_changes directory
+    let changes_dir = Path::new("llm2fs_changes");
+    fs::create_dir_all(changes_dir).context("Failed to create llm2fs_changes directory")?;
+
+    let timestamp = chrono::Local::now().format("%Y-%m-%d-%H-%M-%S").to_string();
+    let filename = format!("{}.txt", timestamp);
+    let file_path = changes_dir.join(filename);
+
+    fs::write(&file_path, &input)
+        .with_context(|| format!("Failed to save stdin data to {:?}", file_path))?;
 
     let response: LLMResponse =
         serde_json::from_str(&input).context("Failed to parse JSON content")?;
 
-    println!("{}\n", response.explanation);
+    println!("{}\n------", response.explanation);
 
-    for (index, change) in response.changes.iter().enumerate() {
-        // Check if the filename is within the current directory
+    for change in &response.changes {
         if !is_file_in_current_directory(&change.filename) {
             println!(
                 "Warning: Filename '{}' is outside the current directory. Skipping.",
@@ -63,9 +74,7 @@ fn main() -> Result<()> {
             continue;
         }
 
-        if index > 0 {
-            println!();
-        }
+        println!();
 
         println!("=>  File: {}", change.filename.display());
         println!(
@@ -229,7 +238,7 @@ fn main() -> Result<()> {
         }
     }
 
-    println!("\n{}", response.conclusion);
+    println!("\n------\n{}", response.conclusion);
 
     Ok(())
 }
