@@ -46,6 +46,8 @@ Example:
 General points:
   - Ensure that the JSON is valid and properly formatted.
 
+  - When deleting lines, one command can only cover contiguous lines. Use multiple commands if necessary.
+
   - To edit existing code, first delete the code old code then insert new code. Deleting first is important.
 
   - Always include existing lines exactly as they are, including whitespace.
