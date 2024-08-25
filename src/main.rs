@@ -13,21 +13,36 @@ struct LLMResponse {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+enum LineOrLines {
+    Line(String),
+    Lines(Vec<String>),
+}
+
+impl LineOrLines {
+    fn lines(&self) -> Vec<String> {
+        match self {
+            LineOrLines::Line(line) => vec![line.clone()],
+            LineOrLines::Lines(lines) => lines.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum Command {
     InsertAfter {
-        insert_lines: Vec<String>,
-        marker_lines: Vec<String>,
+        insert_lines: LineOrLines,
+        marker_lines: LineOrLines,
     },
     InsertBefore {
-        insert_lines: Vec<String>,
-        marker_lines: Vec<String>,
+        insert_lines: LineOrLines,
+        marker_lines: LineOrLines,
     },
     Delete {
-        delete_lines: Vec<String>,
+        delete_lines: LineOrLines,
     },
     CreateFile {
-        new_lines: Vec<String>,
+        new_lines: LineOrLines,
     },
     RenameFile {
         new_filename: PathBuf,
@@ -105,7 +120,7 @@ fn main() -> Result<()> {
                     fs::create_dir_all(parent)
                         .with_context(|| format!("✗ Failed to create directory: {:?}", parent))?;
                 }
-                fs::write(file_path, new_lines.join("\n"))
+                fs::write(file_path, new_lines.lines().join("\n"))
                     .with_context(|| format!("✗ Failed to create file: {:?}", change.filename))?;
                 println!("✓ Created file: {:?}", change.filename);
             }
@@ -132,9 +147,9 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                if let Some(index) = find_in_file_lines(&file_lines, marker_lines) {
+                if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
                     let mut new_lines = file_lines[..index].to_vec();
-                    new_lines.extend(insert_lines.iter().cloned());
+                    new_lines.extend(insert_lines.lines().iter().cloned());
                     new_lines.extend(file_lines[index..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
@@ -160,10 +175,15 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                if let Some(index) = find_in_file_lines(&file_lines, marker_lines) {
-                    let mut new_lines = file_lines[..=index + marker_lines.len() - 1].to_vec();
-                    new_lines.extend(insert_lines.iter().cloned());
-                    new_lines.extend(file_lines[index + marker_lines.len()..].iter().cloned());
+                if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
+                    let mut new_lines =
+                        file_lines[..=index + marker_lines.lines().len() - 1].to_vec();
+                    new_lines.extend(insert_lines.lines().iter().cloned());
+                    new_lines.extend(
+                        file_lines[index + marker_lines.lines().len()..]
+                            .iter()
+                            .cloned(),
+                    );
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
@@ -185,10 +205,10 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                if let Some(start_index) = find_in_file_lines(&file_lines, delete_lines) {
+                if let Some(start_index) = find_in_file_lines(&file_lines, &delete_lines.lines()) {
                     let mut new_lines = file_lines[..start_index].to_vec();
                     new_lines.extend(
-                        file_lines[start_index + delete_lines.len()..]
+                        file_lines[start_index + delete_lines.lines().len()..]
                             .iter()
                             .cloned(),
                     );
