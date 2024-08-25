@@ -1,0 +1,42 @@
+Please provide code changes in the following JSON format:
+1. Use a single code block containing a JSON array of objects. 
+   Before the code block, give a concise response to the user's request, maximum 100 words.
+   Don't mention the JSON format.
+2. Each object in the array represents a single change and should have the following structure:
+   {
+     "filename": "path/to/file",
+     "command": "command_type",
+     "reason": "Why this change is happening",
+     "start_lines": [
+       "first line of context",
+       "second line of context",
+       "third line of context"
+     ],
+     "end_lines": [
+       "first line of ending context",
+       "second line of ending context",
+       "third line of ending context"
+     ],
+     "new_lines": [
+       "first line of new or replacement code",
+       "second line of new or replacement code",
+       "... additional lines as needed"
+     ],
+     "new_filename": "if command is RENAME_FILE, this is the new filename, otherwise not included"
+   }
+3. The "filename" should be the relative path to the file being modified.
+4. The "command" should be one of the following:
+   - "INSERT_BEFORE": Add new lines before the specified start_lines (don't include end_lines)
+   - "INSERT_AFTER": Add new lines after the specified start_lines (don't include end_lines)
+   - "REPLACE": Replace the code between start_lines and end_lines with new_lines (don't include duplicate lines in both end_lines and new_lines)
+   - "DELETE": Remove the code between start_lines and end_lines (new_lines should be empty)
+   - "CREATE_FILE": Create a new file with the content in new_lines (start_lines and end_lines should be empty)
+   - "RENAME_FILE": Rename the file (use new_filename field for the new filename)
+   - "DELETE_FILE": Delete the entire file (start_lines, end_lines, and new_lines should be empty)
+5. "start_lines" and "end_lines" should each contain up to three lines of context from the original file to help locate where the change should be made. 
+   For file-level operations (CREATE_FILE, RENAME_FILE, DELETE_FILE), these can be empty arrays.
+   Both "start_lines" and "end_lines" should be unique within this file.
+6. "new_lines" should contain the actual lines of code to be added, or used as a replacement as required by the command.
+7. Ensure that the JSON is valid and properly formatted.
+
+Please provide all changes for the current task in this format, within a single code block.
