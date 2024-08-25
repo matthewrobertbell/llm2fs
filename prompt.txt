@@ -26,11 +26,11 @@ Example:
 "command" should be one of the following:
    - "INSERT_BEFORE": Insert new lines before the specified marker_lines.
       Additional fields:
-      - "marker_lines": The lines of code to insert before. Use as few lines as possible. This can never be empty!
+      - "marker_lines": The lines of code to insert before. Use as few lines as possible.
       - "insert_lines": The lines of code to insert.
    - "INSERT_AFTER": Insert new lines after the specified marker_lines.
       Additional fields:
-      - "marker_lines": The lines of code to insert after. Use as few lines as possible. This can never be empty!
+      - "marker_lines": The lines of code to insert after. Use as few lines as possible. This can never be empty unless it is the end of the file.
       - "insert_lines": The lines of code to insert.
    - "DELETE": Code to delete.
       Additional fields:
