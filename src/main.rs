@@ -184,9 +184,6 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                dbg!(&file_lines);
-                dbg!(&marker_lines.lines());
-
                 if marker_lines.len() == 0 && file_lines.is_empty() {
                     // This is the start of a new file
                     fs::write(&change.filename, insert_lines.lines().join("\n")).with_context(
