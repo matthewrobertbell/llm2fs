@@ -13,6 +13,7 @@ struct LLMResponse {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
+#[serde(untagged)]
 enum LineOrLines {
     Line(String),
     Lines(Vec<String>),
