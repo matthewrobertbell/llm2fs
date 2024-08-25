@@ -1,5 +1,6 @@
 Please provide code changes in the following JSON format:
-1. Produce a JSON object with the following fields:
+
+Produce a JSON object with the following fields:
    - "explanation": A concise response to the user's request, maximum 100 words.
    - "changes": An array of JSON objects, each representing a single change. 
      It's ok if the changes array is empty, just explain why.
@@ -9,39 +10,36 @@ Each object in the changes array represents a single change and should have the 
    {
      "filename": "path/to/file",
      "command": "command_type",
-     "reason": "Why this change is happening",
-     "start_lines": [
-       "first line of context",
-       "second line of context",
-       "third line of context"
-     ],
-     "end_lines": [
-       "first line of ending context",
-       "second line of ending context",
-       "third line of ending context"
-     ],
-     "new_lines": [
-       "first line of new or replacement code",
-       "second line of new or replacement code",
-       "... additional lines as needed"
-     ],
-     "new_filename": "if command is RENAME_FILE, this is the new filename, otherwise not included"
+     "reason": "Why this change is happening"
    }
 The "filename" should be the relative path to the file being modified.
-The "command" should be one of the following:
-   - "INSERT_BEFORE": Add new lines before the specified start_lines (don't include end_lines)
-   - "INSERT_AFTER": Add new lines after the specified start_lines (don't include end_lines)
-   - "REPLACE": Replace the code between start_lines and end_lines with new_lines (don't include duplicate lines in both end_lines and new_lines)
-   - "DELETE": Remove the code between start_lines and end_lines (new_lines should be empty)
-   - "CREATE_FILE": Create a new file with the content in new_lines (start_lines and end_lines should be empty)
-   - "RENAME_FILE": Rename the file (use new_filename field for the new filename)
-   - "DELETE_FILE": Delete the entire file (start_lines, end_lines, and new_lines should be empty)
- "start_lines" and "end_lines" should each contain up to three lines of context from the original file to help locate where the change should be made. 
-   For file-level operations (CREATE_FILE, RENAME_FILE, DELETE_FILE), these can be empty arrays.
-   Both "start_lines" and "end_lines" should be unique within this file.
-"new_lines" should contain the actual lines of code to be added, or used as a replacement as required by the command.
+The "command" optionally has additional fields, if there are additional fields they should be in an oject with the command as the key.
+Otherwise the command should be a string.
+"command" should be one of the following:
+   - "INSERT_BEFORE": Insert new lines before the specified marker_lines.
+      Additional fields:
+      - "marker_lines": The lines of code to insert before. Use as few lines as possible.
+      - "insert_lines": The lines of code to insert.
+   - "INSERT_AFTER": Insert new lines after the specified marker_lines.
+      Additional fields:
+      - "marker_lines": The lines of code to insert after. Use as few lines as possible.
+      - "insert_lines": The lines of code to insert.
+   - "DELETE": Code to delete.
+      Additional fields:
+      - "delete_lines": The lines of code to delete.
+   - "CREATE_FILE": Create a new file
+      Additional fields:
+      - "new_lines": The lines of code to insert.
+   - "RENAME_FILE": Rename the file
+      Additional fields:
+      - "new_filename": The new filename.
+   - "DELETE_FILE": Delete the entire file
 
+General points:
+  - Ensure that the JSON is valid and properly formatted.
 
-Ensure that the JSON is valid and properly formatted.
+  - To edit existing code, first delete the code old code then insert new code. Deleting first is important.
 
-Please provide all changes for the current task in this format. No other text outside of the JSON.
+  - Always include existing lines of code exactly as they are.
+
+  - Please provide all changes for the current task in this format. No other text outside of the JSON.

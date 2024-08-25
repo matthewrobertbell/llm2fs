@@ -15,27 +15,31 @@ struct LLMResponse {
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum Command {
-    InsertAfter,
-    InsertBefore,
-    Replace,
-    Delete,
-    CreateFile,
-    RenameFile,
+    InsertAfter {
+        insert_lines: Vec<String>,
+        marker_lines: Vec<String>,
+    },
+    InsertBefore {
+        insert_lines: Vec<String>,
+        marker_lines: Vec<String>,
+    },
+    Delete {
+        delete_lines: Vec<String>,
+    },
+    CreateFile {
+        new_lines: Vec<String>,
+    },
+    RenameFile {
+        new_filename: PathBuf,
+    },
     DeleteFile,
 }
 
 #[derive(Debug, Deserialize)]
 struct Change {
     filename: PathBuf,
-    new_filename: Option<PathBuf>,
     command: Command,
     reason: String,
-    #[serde(default)]
-    start_lines: Vec<String>,
-    #[serde(default)]
-    end_lines: Vec<String>,
-    #[serde(default)]
-    new_lines: Vec<String>,
 }
 
 fn main() -> Result<()> {
@@ -80,19 +84,18 @@ fn main() -> Result<()> {
         println!(
             "=>  Action: {}",
             match change.command {
-                Command::InsertBefore => "Inserting new content before the specified lines",
-                Command::InsertAfter => "Inserting new content after the specified lines",
-                Command::Replace => "Replacing existing content",
-                Command::Delete => "Deleting content",
-                Command::CreateFile => "Creating new file",
-                Command::RenameFile => "Renaming file",
+                Command::InsertBefore { .. } => "Inserting new content before the specified lines",
+                Command::InsertAfter { .. } => "Inserting new content after the specified lines",
+                Command::Delete { .. } => "Deleting content",
+                Command::CreateFile { .. } => "Creating new file",
+                Command::RenameFile { .. } => "Renaming file",
                 Command::DeleteFile => "Deleting file",
             }
         );
         println!("=>  Reason: {}", change.reason);
 
-        match change.command {
-            Command::CreateFile => {
+        match &change.command {
+            Command::CreateFile { new_lines } => {
                 let file_path = Path::new(&change.filename);
                 if file_path.exists() {
                     eprintln!("✗ File already exists: {:?}", change.filename);
@@ -102,41 +105,36 @@ fn main() -> Result<()> {
                     fs::create_dir_all(parent)
                         .with_context(|| format!("✗ Failed to create directory: {:?}", parent))?;
                 }
-                fs::write(file_path, change.new_lines.join("\n"))
+                fs::write(file_path, new_lines.join("\n"))
                     .with_context(|| format!("✗ Failed to create file: {:?}", change.filename))?;
                 println!("✓ Created file: {:?}", change.filename);
             }
-            Command::RenameFile => {
-                if let Some(new_filename) = &change.new_filename {
-                    fs::rename(&change.filename, new_filename).with_context(|| {
-                        format!("✗ Failed to rename file: {:?}", change.filename)
-                    })?;
-                    println!(
-                        "✓ Renamed file: {:?} -> {:?}",
-                        change.filename, new_filename
-                    );
-                } else {
-                    eprintln!(
-                        "✗ Failed to rename file as no new filename was provided: {:?}",
-                        change.filename
-                    );
-                }
+            Command::RenameFile { new_filename } => {
+                fs::rename(&change.filename, new_filename)
+                    .with_context(|| format!("✗ Failed to rename file: {:?}", change.filename))?;
+                println!(
+                    "✓ Renamed file: {:?} -> {:?}",
+                    change.filename, new_filename
+                );
             }
             Command::DeleteFile => {
                 fs::remove_file(&change.filename)
                     .with_context(|| format!("✗ Failed to delete file: {:?}", change.filename))?;
                 println!("✓ Deleted file: {:?}", change.filename);
             }
-            Command::InsertBefore => {
+            Command::InsertBefore {
+                insert_lines,
+                marker_lines,
+            } => {
                 let file_lines = fs::read_to_string(&change.filename)
                     .with_context(|| format!("✗ Failed to read file: {:?}", change.filename))?
                     .lines()
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                if let Some(index) = find_in_file_lines(&file_lines, &change.start_lines) {
+                if let Some(index) = find_in_file_lines(&file_lines, marker_lines) {
                     let mut new_lines = file_lines[..index].to_vec();
-                    new_lines.extend(change.new_lines.iter().cloned());
+                    new_lines.extend(insert_lines.iter().cloned());
                     new_lines.extend(file_lines[index..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
@@ -152,17 +150,20 @@ fn main() -> Result<()> {
                     );
                 }
             }
-            Command::InsertAfter => {
+            Command::InsertAfter {
+                marker_lines,
+                insert_lines,
+            } => {
                 let file_lines = fs::read_to_string(&change.filename)
                     .with_context(|| format!("✗ Failed to read file: {:?}", change.filename))?
                     .lines()
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                if let Some(index) = find_in_file_lines(&file_lines, &change.start_lines) {
-                    let mut new_lines = file_lines[..index].to_vec();
-                    new_lines.extend(change.new_lines.iter().cloned());
-                    new_lines.extend(file_lines[index..].iter().cloned());
+                if let Some(index) = find_in_file_lines(&file_lines, marker_lines) {
+                    let mut new_lines = file_lines[..=index + marker_lines.len() - 1].to_vec();
+                    new_lines.extend(insert_lines.iter().cloned());
+                    new_lines.extend(file_lines[index + marker_lines.len()..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
@@ -177,53 +178,20 @@ fn main() -> Result<()> {
                     );
                 }
             }
-            Command::Replace => {
+            Command::Delete { delete_lines } => {
                 let file_lines = fs::read_to_string(&change.filename)
                     .with_context(|| format!("✗ Failed to read file: {:?}", change.filename))?
                     .lines()
                     .map(String::from)
                     .collect::<Vec<_>>();
 
-                let start_index = find_in_file_lines(&file_lines, &change.start_lines);
-                let end_index = find_in_file_lines(&file_lines, &change.end_lines);
-
-                if let (Some(start_index), Some(end_index)) = (start_index, end_index) {
+                if let Some(start_index) = find_in_file_lines(&file_lines, delete_lines) {
                     let mut new_lines = file_lines[..start_index].to_vec();
-                    new_lines.extend(change.new_lines.iter().cloned());
                     new_lines.extend(
-                        file_lines[end_index + change.end_lines.len()..]
+                        file_lines[start_index + delete_lines.len()..]
                             .iter()
                             .cloned(),
                     );
-                    fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
-                        format!("✗ Failed to write to file: {:?}", change.filename)
-                    })?;
-                    println!("✓ Replaced content in file: {:?}", change.filename);
-                } else {
-                    eprintln!(
-                        "✗ Failed to find specified lines in file: {:?}",
-                        change.filename
-                    );
-                }
-            }
-            Command::Delete => {
-                let file_lines = fs::read_to_string(&change.filename)
-                    .with_context(|| format!("✗ Failed to read file: {:?}", change.filename))?
-                    .lines()
-                    .map(String::from)
-                    .collect::<Vec<_>>();
-
-                let start_index = find_in_file_lines(&file_lines, &change.start_lines);
-                let end_index = find_in_file_lines(&file_lines, &change.end_lines);
-
-                if let (Some(start_index), Some(end_index)) = (start_index, end_index) {
-                    let mut new_lines = file_lines[..start_index].to_vec();
-                    new_lines.extend(
-                        file_lines[end_index + change.end_lines.len()..]
-                            .iter()
-                            .cloned(),
-                    );
-
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
