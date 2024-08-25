@@ -1,7 +1,7 @@
 Please provide code changes in the following JSON format:
 1. Use a single code block containing a JSON array of objects. 
    Before the code block, give a concise response to the user's request, maximum 100 words.
-   Don't mention the JSON format.
+   Don't mention the JSON format. No need to say "Here is the JSON:" or anything like that.
 2. Each object in the array represents a single change and should have the following structure:
    {
      "filename": "path/to/file",

@@ -48,7 +48,10 @@ fn main() -> Result<()> {
     println!("---");
 
     // Parse the JSON part
-    let json_content = parts[1].trim_end_matches("```").trim();
+    let json_content = parts[1]
+        .split("```")
+        .next()
+        .context("Failed to parse JSON content")?;
     let changes: Vec<Change> =
         serde_json::from_str(json_content).context("Failed to parse JSON content")?;
 
