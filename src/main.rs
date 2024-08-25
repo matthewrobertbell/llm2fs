@@ -2,7 +2,7 @@ use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -122,8 +122,7 @@ fn main() -> Result<()> {
             Command::CreateFile { new_lines } => {
                 let file_path = Path::new(&change.filename);
                 if file_path.exists() {
-                    eprintln!("✗ File already exists: {:?}", change.filename);
-                    continue;
+                    bail!("File already exists: {:?}", change.filename);
                 }
                 if let Some(parent) = file_path.parent() {
                     fs::create_dir_all(parent)
@@ -176,8 +175,8 @@ fn main() -> Result<()> {
                         change.filename.display()
                     );
                 } else {
-                    eprintln!(
-                        "✗ Failed to find {} lines before a marker in {:?}",
+                    bail!(
+                        "Failed to find {} lines before a marker in {:?}",
                         marker_lines.len(),
                         change.filename.display()
                     );
@@ -216,8 +215,8 @@ fn main() -> Result<()> {
                         change.filename.display()
                     );
                 } else {
-                    eprintln!(
-                        "✗ Failed to find {} lines after a marker in {:?}",
+                    bail!(
+                        "Failed to find {} lines after a marker in {:?}",
                         marker_lines.len(),
                         change.filename.display()
                     );
@@ -246,8 +245,8 @@ fn main() -> Result<()> {
                         change.filename.display()
                     );
                 } else {
-                    eprintln!(
-                        "✗ Failed to find {} lines to delete in {:?}",
+                    bail!(
+                        "Failed to find {} lines to delete in {:?}",
                         delete_lines.len(),
                         change.filename.display()
                     );
