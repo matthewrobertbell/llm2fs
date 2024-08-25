@@ -29,7 +29,7 @@ impl LineOrLines {
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "command", rename_all = "SCREAMING_SNAKE_CASE")]
 enum Command {
     InsertAfter {
         insert_lines: LineOrLines,
@@ -54,6 +54,7 @@ enum Command {
 #[derive(Debug, Deserialize)]
 struct Change {
     filename: PathBuf,
+    #[serde(flatten)]
     command: Command,
     reason: String,
 }

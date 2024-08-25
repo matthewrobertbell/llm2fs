@@ -13,8 +13,16 @@ Each object in the changes array represents a single change and should have the 
      "reason": "Why this change is happening"
    }
 The "filename" should be the relative path to the file being modified.
-The "command" optionally has additional fields, if there are additional fields they should be in an oject with the command as the key.
-Otherwise the command should be a string.
+The "command" optionally has additional fields, which should be included at the same level as the command.
+Example:
+  {
+    "filename": "src/main.rs",
+    "command": "INSERT_BEFORE",
+    "marker_lines": ["fn main() {"],
+    "insert_lines": ["fn main() {", "    println!(\"Hello, world!\");", "}", "fn main() {"],
+    "reason": "Add a new function to the file"
+  }
+
 "command" should be one of the following:
    - "INSERT_BEFORE": Insert new lines before the specified marker_lines.
       Additional fields:
@@ -40,6 +48,6 @@ General points:
 
   - To edit existing code, first delete the code old code then insert new code. Deleting first is important.
 
-  - Always include existing lines of code exactly as they are.
+  - Always include existing lines exactly as they are, including whitespace.
 
   - Please provide all changes for the current task in this format. No other text outside of the JSON.
