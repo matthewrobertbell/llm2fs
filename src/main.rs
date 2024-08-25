@@ -3,9 +3,16 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize)]
+struct LLMResponse {
+    explanation: String,
+    changes: Vec<Change>,
+    conclusion: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 enum Command {
     InsertAfter,
@@ -17,7 +24,7 @@ enum Command {
     DeleteFile,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 struct Change {
     filename: PathBuf,
     new_filename: Option<PathBuf>,
@@ -41,25 +48,12 @@ fn main() -> Result<()> {
     fs::write("llm2fs_last_changes.txt", &input)
         .context("Failed to save stdin data to llm2fs_last_changes.txt")?;
 
-    // Split the input into text and JSON parts
-    let parts: Vec<&str> = input.split("\n```json\n").collect();
-    if parts.len() != 2 {
-        return Err(anyhow::anyhow!("Invalid input format"));
-    }
+    let response: LLMResponse =
+        serde_json::from_str(&input).context("Failed to parse JSON content")?;
 
-    // Print the explanation part
-    println!("{}", textwrap::wrap(parts[0].trim(), 80).join("\n"));
-    println!("---");
+    println!("{}\n", response.explanation);
 
-    // Parse the JSON part
-    let json_content = parts[1]
-        .split("```")
-        .next()
-        .context("Failed to parse JSON content")?;
-    let changes: Vec<Change> =
-        serde_json::from_str(json_content).context("Failed to parse JSON content")?;
-
-    for (index, change) in changes.iter().enumerate() {
+    for (index, change) in response.changes.iter().enumerate() {
         // Check if the filename is within the current directory
         if !is_file_in_current_directory(&change.filename) {
             println!(
@@ -73,7 +67,6 @@ fn main() -> Result<()> {
             println!();
         }
 
-        println!("Processing change:");
         println!("=>  File: {}", change.filename.display());
         println!(
             "=>  Action: {}",
@@ -235,6 +228,8 @@ fn main() -> Result<()> {
             }
         }
     }
+
+    println!("\n{}", response.conclusion);
 
     Ok(())
 }
