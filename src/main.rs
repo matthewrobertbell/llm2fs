@@ -37,6 +37,10 @@ fn main() -> Result<()> {
         .read_to_string(&mut input)
         .context("Failed to read from stdin")?;
 
+    // Save the stdin data to "llm2fs_last_changes.txt"
+    fs::write("llm2fs_last_changes.txt", &input)
+        .context("Failed to save stdin data to llm2fs_last_changes.txt")?;
+
     // Split the input into text and JSON parts
     let parts: Vec<&str> = input.split("\n```json\n").collect();
     if parts.len() != 2 {
