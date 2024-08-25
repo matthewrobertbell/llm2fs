@@ -258,7 +258,9 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     }
 
     for (i, window) in file_lines.windows(needle.len()).enumerate() {
-        if window == needle {
+        if window.iter().map(|s| s.trim()).collect::<Vec<_>>()
+            == needle.iter().map(|s| s.trim()).collect::<Vec<_>>()
+        {
             return Some(i);
         }
     }
