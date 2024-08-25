@@ -47,6 +47,36 @@ General points:
   - Ensure that the JSON is valid and properly formatted.
 
   - When deleting lines, one command can only cover contiguous lines. Use multiple commands if there are multiple non-contiguous blocks of lines to delete.
+      Example:
+
+        "changes": [
+          {
+            "filename": "index.html",
+            "command": "DELETE",
+            "delete_lines": [
+              "        <a class=\"navbar-brand\" href=\"#\">Coffee Shop</a>"
+            ],
+            "reason": "Remove old coffee shop name references"
+          },
+          {
+            "filename": "index.html",
+            "command": "DELETE",
+            "delete_lines": [
+              "            <h1>Welcome to Our Coffee Shop</h1>"
+            ],
+            "reason": "Remove old coffee shop name references"
+          },
+          {
+            "filename": "index.html",
+            "command": "DELETE",
+            "delete_lines": [
+              "                <p>&copy; 2023 Local Coffee Shop. All rights reserved. <a href=\"terms.html\">Terms and Conditions</a></p>"
+            ],
+            "reason": "Remove old coffee shop name references"
+          }
+        ]
+
+  - When inserting new lines, only insert contiguous blocks of lines. Use multiple commands if there are multiple non-contiguous blocks of lines to insert within a file.
 
   - To edit existing code, first delete the code old code then insert new code. Deleting first is important.
 
