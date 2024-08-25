@@ -104,19 +104,19 @@ fn main() -> Result<()> {
 
         println!();
 
-        println!("=>  File: {}", change.filename.display());
+        println!("=> File: {}", change.filename.display());
         println!(
-            "=>  Action: {}",
+            "=> Action: {}",
             match change.command {
-                Command::InsertBefore { .. } => "Inserting new content before the specified lines",
-                Command::InsertAfter { .. } => "Inserting new content after the specified lines",
-                Command::Delete { .. } => "Deleting content",
-                Command::CreateFile { .. } => "Creating new file",
-                Command::RenameFile { .. } => "Renaming file",
-                Command::DeleteFile => "Deleting file",
+                Command::InsertBefore { .. } => "Inserting new lines before a marker",
+                Command::InsertAfter { .. } => "Inserting new lines after a marker",
+                Command::Delete { .. } => "Deleting lines",
+                Command::CreateFile { .. } => "Creating a new file",
+                Command::RenameFile { .. } => "Renaming a file",
+                Command::DeleteFile => "Deleting a file",
             }
         );
-        println!("=>  Reason: {}", change.reason);
+        println!("=> Reason: {}", change.reason);
 
         match &change.command {
             Command::CreateFile { new_lines } => {
@@ -129,16 +129,19 @@ fn main() -> Result<()> {
                     fs::create_dir_all(parent)
                         .with_context(|| format!("✗ Failed to create directory: {:?}", parent))?;
                 }
-                fs::write(file_path, new_lines.lines().join("\n"))
-                    .with_context(|| format!("✗ Failed to create file: {:?}", change.filename))?;
-                println!("✓ Created file: {:?}", change.filename);
+                fs::write(file_path, new_lines.lines().join("\n")).with_context(|| {
+                    format!("✗ Failed to create file: {}", change.filename.display())
+                })?;
+                println!("✓ Created file: {}", change.filename.display());
             }
             Command::RenameFile { new_filename } => {
-                fs::rename(&change.filename, new_filename)
-                    .with_context(|| format!("✗ Failed to rename file: {:?}", change.filename))?;
+                fs::rename(&change.filename, new_filename).with_context(|| {
+                    format!("✗ Failed to rename file: {}", change.filename.display())
+                })?;
                 println!(
-                    "✓ Renamed file: {:?} -> {:?}",
-                    change.filename, new_filename
+                    "✓ Renamed file: {} -> {}",
+                    change.filename.display(),
+                    new_filename.display()
                 );
             }
             Command::DeleteFile => {
@@ -164,13 +167,15 @@ fn main() -> Result<()> {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
                     println!(
-                        "✓ Inserted new content before specified lines in file: {:?}",
-                        change.filename
+                        "✓ Inserted {} lines into {}",
+                        insert_lines.len(),
+                        change.filename.display()
                     );
                 } else {
                     eprintln!(
-                        "✗ Failed to find specified lines in file: {:?}",
-                        change.filename
+                        "✗ Failed to find {} lines before a marker in {:?}",
+                        marker_lines.len(),
+                        change.filename.display()
                     );
                 }
             }
@@ -189,7 +194,11 @@ fn main() -> Result<()> {
                     fs::write(&change.filename, insert_lines.lines().join("\n")).with_context(
                         || format!("✗ Failed to write to file: {:?}", change.filename),
                     )?;
-                    println!("✓ Created new file: {:?}", change.filename);
+                    println!(
+                        "✓ Inserted {} lines into {}",
+                        insert_lines.len(),
+                        change.filename.display()
+                    );
                 } else if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
                     let mut new_lines = file_lines[..=index + marker_lines.len() - 1].to_vec();
                     new_lines.extend(insert_lines.lines().iter().cloned());
@@ -198,13 +207,15 @@ fn main() -> Result<()> {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
                     println!(
-                        "✓ Inserted new content after specified lines in file: {:?}",
-                        change.filename
+                        "✓ Inserted {} lines after a marker into {}",
+                        insert_lines.len(),
+                        change.filename.display()
                     );
                 } else {
                     eprintln!(
-                        "✗ Failed to find specified lines in file: {:?}",
-                        change.filename
+                        "✗ Failed to find {} lines after a marker in {:?}",
+                        marker_lines.len(),
+                        change.filename.display()
                     );
                 }
             }
@@ -225,11 +236,16 @@ fn main() -> Result<()> {
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
-                    println!("✓ Deleted content in file: {:?}", change.filename);
+                    println!(
+                        "✓ Deleted {} lines in {:?}",
+                        delete_lines.len(),
+                        change.filename.display()
+                    );
                 } else {
                     eprintln!(
-                        "✗ Failed to find specified lines to delete in file: {:?}",
-                        change.filename
+                        "✗ Failed to find {} lines to delete in {:?}",
+                        delete_lines.len(),
+                        change.filename.display()
                     );
                 }
             }
