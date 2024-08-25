@@ -132,7 +132,11 @@ fn main() -> Result<()> {
                 fs::write(file_path, new_lines.lines().join("\n")).with_context(|| {
                     format!("✗ Failed to create file: {}", change.filename.display())
                 })?;
-                println!("✓ Created file: {}", change.filename.display());
+                println!(
+                    "✓ Created file {} and inserted {} lines",
+                    change.filename.display(),
+                    new_lines.len()
+                );
             }
             Command::RenameFile { new_filename } => {
                 fs::rename(&change.filename, new_filename).with_context(|| {
@@ -167,7 +171,7 @@ fn main() -> Result<()> {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
                     println!(
-                        "✓ Inserted {} lines into {}",
+                        "✓ Inserted {} lines before a marker into {}",
                         insert_lines.len(),
                         change.filename.display()
                     );
