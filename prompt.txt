@@ -26,11 +26,11 @@ Example:
 "command" should be one of the following:
    - "INSERT_BEFORE": Insert new lines before the specified marker_lines.
       Additional fields:
-      - "marker_lines": The lines of code to insert before. Use as few lines as possible.
+      - "marker_lines": The lines of code to insert before. Use as few lines as possible. This can never be empty!
       - "insert_lines": The lines of code to insert.
    - "INSERT_AFTER": Insert new lines after the specified marker_lines.
       Additional fields:
-      - "marker_lines": The lines of code to insert after. Use as few lines as possible.
+      - "marker_lines": The lines of code to insert after. Use as few lines as possible. This can never be empty!
       - "insert_lines": The lines of code to insert.
    - "DELETE": Code to delete.
       Additional fields:
@@ -51,3 +51,5 @@ General points:
   - Always include existing lines exactly as they are, including whitespace.
 
   - Please provide all changes for the current task in this format. No other text outside of the JSON.
+
+  - Rather than deleting all of the lines in a file, delete the file then create the file using CREATE_FILE.

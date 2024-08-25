@@ -26,6 +26,13 @@ impl LineOrLines {
             LineOrLines::Lines(lines) => lines.clone(),
         }
     }
+
+    fn len(&self) -> usize {
+        match self {
+            LineOrLines::Line(_) => 1,
+            LineOrLines::Lines(lines) => lines.len(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -177,15 +184,13 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
+                dbg!(&file_lines);
+                dbg!(&marker_lines.lines());
+
                 if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
-                    let mut new_lines =
-                        file_lines[..=index + marker_lines.lines().len() - 1].to_vec();
+                    let mut new_lines = file_lines[..=index + marker_lines.len() - 1].to_vec();
                     new_lines.extend(insert_lines.lines().iter().cloned());
-                    new_lines.extend(
-                        file_lines[index + marker_lines.lines().len()..]
-                            .iter()
-                            .cloned(),
-                    );
+                    new_lines.extend(file_lines[index + marker_lines.len()..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
