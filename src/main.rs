@@ -284,6 +284,9 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
         return None;
     }
 
+    dbg!(&non_empty_needle);
+    dbg!(&non_empty_file_lines);
+
     for (i, window) in non_empty_file_lines
         .windows(non_empty_needle.len())
         .enumerate()
