@@ -170,13 +170,13 @@ fn main() -> Result<()> {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
                     println!(
-                        "✓ Inserted {} lines before a marker into {}",
+                        "✓ Inserted {} lines into {}",
                         insert_lines.len(),
                         change.filename.display()
                     );
                 } else {
                     bail!(
-                        "Failed to find {} lines before a marker in {:?}",
+                        "Failed to find {} lines in {:?}",
                         marker_lines.len(),
                         change.filename.display()
                     );
@@ -210,13 +210,13 @@ fn main() -> Result<()> {
                         format!("✗ Failed to write to file: {:?}", change.filename)
                     })?;
                     println!(
-                        "✓ Inserted {} lines after a marker into {}",
+                        "✓ Inserted {} lines into {}",
                         insert_lines.len(),
                         change.filename.display()
                     );
                 } else {
                     bail!(
-                        "Failed to find {} lines after a marker in {:?}",
+                        "Failed to find {} lines in {:?}",
                         marker_lines.len(),
                         change.filename.display()
                     );
