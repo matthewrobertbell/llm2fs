@@ -266,12 +266,20 @@ fn is_file_in_current_directory(filename: &Path) -> bool {
 }
 
 fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize> {
-    let non_empty_needle: Vec<_> = needle.iter().filter(|s| !s.trim().is_empty()).collect();
+    let non_empty_needle: Vec<_> = needle
+        .iter()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
     if non_empty_needle.is_empty() {
         return Some(0);
     }
 
-    let non_empty_file_lines: Vec<_> = file_lines.iter().filter(|s| !s.trim().is_empty()).collect();
+    let non_empty_file_lines: Vec<_> = file_lines
+        .iter()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
     if non_empty_needle.len() > non_empty_file_lines.len() {
         return None;
     }
@@ -280,12 +288,7 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
         .windows(non_empty_needle.len())
         .enumerate()
     {
-        if window.iter().map(|s| s.trim()).collect::<Vec<_>>()
-            == non_empty_needle
-                .iter()
-                .map(|s| s.trim())
-                .collect::<Vec<_>>()
-        {
+        if window == non_empty_needle {
             return Some(
                 file_lines
                     .iter()
