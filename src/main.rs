@@ -266,18 +266,33 @@ fn is_file_in_current_directory(filename: &Path) -> bool {
 }
 
 fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize> {
-    if needle.is_empty() {
+    let non_empty_needle: Vec<_> = needle.iter().filter(|s| !s.trim().is_empty()).collect();
+    if non_empty_needle.is_empty() {
         return Some(0);
     }
-    if needle.len() > file_lines.len() {
+
+    let non_empty_file_lines: Vec<_> = file_lines.iter().filter(|s| !s.trim().is_empty()).collect();
+    if non_empty_needle.len() > non_empty_file_lines.len() {
         return None;
     }
 
-    for (i, window) in file_lines.windows(needle.len()).enumerate() {
+    for (i, window) in non_empty_file_lines
+        .windows(non_empty_needle.len())
+        .enumerate()
+    {
         if window.iter().map(|s| s.trim()).collect::<Vec<_>>()
-            == needle.iter().map(|s| s.trim()).collect::<Vec<_>>()
+            == non_empty_needle
+                .iter()
+                .map(|s| s.trim())
+                .collect::<Vec<_>>()
         {
-            return Some(i);
+            return Some(
+                file_lines
+                    .iter()
+                    .take(i)
+                    .filter(|s| !s.trim().is_empty())
+                    .count(),
+            );
         }
     }
 
