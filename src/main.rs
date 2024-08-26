@@ -132,7 +132,7 @@ fn main() -> Result<()> {
                     format!("✗ Failed to create file: {}", change.filename.display())
                 })?;
                 println!(
-                    "✓ Created file {} and inserted {} lines",
+                    "�� Created file {} and inserted {} lines",
                     change.filename.display(),
                     new_lines.len()
                 );
@@ -268,7 +268,7 @@ fn is_file_in_current_directory(filename: &Path) -> bool {
 fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize> {
     let non_empty_needle: Vec<_> = needle
         .iter()
-        .map(|s| s.trim())
+        .map(|s| unescape(s.trim()))
         .filter(|s| !s.is_empty())
         .collect();
     if non_empty_needle.is_empty() {
@@ -277,15 +277,12 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
 
     let non_empty_file_lines: Vec<_> = file_lines
         .iter()
-        .map(|s| s.trim())
+        .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
     if non_empty_needle.len() > non_empty_file_lines.len() {
         return None;
     }
-
-    dbg!(&non_empty_needle);
-    dbg!(&non_empty_file_lines);
 
     for (i, window) in non_empty_file_lines
         .windows(non_empty_needle.len())
@@ -303,4 +300,30 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     }
 
     None
+}
+
+fn unescape(s: &str) -> String {
+    let mut chars = s.chars();
+    let mut result = String::new();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            if let Some(next) = chars.next() {
+                match next {
+                    'n' => result.push('\n'),
+                    'r' => result.push('\r'),
+                    't' => result.push('\t'),
+                    '\\' => result.push('\\'),
+                    _ => {
+                        result.push('\\');
+                        result.push(next);
+                    }
+                }
+            } else {
+                result.push('\\');
+            }
+        } else {
+            result.push(c);
+        }
+    }
+    result
 }
