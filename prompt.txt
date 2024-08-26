@@ -46,6 +46,8 @@ Example:
 General points:
   - Ensure that the JSON is valid and properly formatted.
 
+  - Don't create files that already exist. Either add to an existing file or create a new file.
+
   - When deleting lines, one command can only cover contiguous lines. Use multiple commands if there are multiple non-contiguous blocks of lines to delete.
       Example:
 
