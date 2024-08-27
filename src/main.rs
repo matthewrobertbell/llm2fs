@@ -258,7 +258,11 @@ fn main() -> Result<()> {
         }
     }
 
-    println!("\n------\n{}", response.conclusion);
+    if !response.changes.is_empty() {
+        println!("------");
+    }
+
+    println!(" {}", response.conclusion);
 
     Ok(())
 }
