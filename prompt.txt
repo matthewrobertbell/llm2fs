@@ -87,3 +87,7 @@ General points:
   - Please provide all changes for the current task in this format. No other text outside of the JSON.
 
   - Rather than deleting all of the lines in a file, delete the file then create the file using CREATE_FILE.
+
+  - Marker lines should be unique within a file, to allow for an exact match. Bad examples: "{", "}", "".
+
+  - Market lines should not duplicate any lines from insert_lines, as this will cause code in the file to have duplicate lines.
