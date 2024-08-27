@@ -135,7 +135,7 @@ fn main() -> Result<()> {
                     format!("✗ Failed to create file: {}", change.filename.display())
                 })?;
                 println!(
-                    "�� Created file {} and inserted {} lines",
+                    "✓ Created file {} and inserted {} lines",
                     change.filename.display(),
                     new_lines.len()
                 );
@@ -305,25 +305,12 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
         return Some(0);
     }
 
-    let non_empty_file_lines: Vec<_> = file_lines
-        .iter()
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .collect();
-
-    if non_empty_needle.len() > non_empty_file_lines.len() {
-        return None;
-    }
-
     let needle_joined = non_empty_needle.join("\n");
     let needle_len = needle_joined.chars().count();
     let mut best_match = None;
     let mut min_distance = usize::MAX;
 
-    for (i, window) in non_empty_file_lines
-        .windows(non_empty_needle.len())
-        .enumerate()
-    {
+    for (i, window) in file_lines.windows(needle.len()).enumerate() {
         let window_joined = window.join("\n");
         let distance = levenshtein_distance(&needle_joined, &window_joined);
 
@@ -342,13 +329,7 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
         let similarity = 1.0 - (min_distance as f64 / needle_len as f64);
         println!("Best match similarity: {}", similarity);
         if similarity >= 0.95 {
-            return Some(
-                file_lines
-                    .iter()
-                    .take(i)
-                    .filter(|s| !s.trim().is_empty())
-                    .count(),
-            );
+            return Some(i);
         }
     }
 
