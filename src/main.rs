@@ -95,6 +95,8 @@ fn main() -> Result<()> {
     println!("{}\n------", response.explanation);
 
     for change in &response.changes {
+        // Sleep for 10 seconds before processing each change
+        std::thread::sleep(std::time::Duration::from_secs(10));
         if !is_file_in_current_directory(&change.filename) {
             println!(
                 "Warning: Filename '{}' is outside the current directory. Skipping.",
