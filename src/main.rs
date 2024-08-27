@@ -164,8 +164,22 @@ fn main() -> Result<()> {
                     .collect::<Vec<_>>();
 
                 if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
+                    let mut insert_lines = insert_lines.lines();
+                    let marker_lines = marker_lines.lines();
+
+                    // Remove marker lines from insert_lines if they match
+                    if insert_lines.len() >= marker_lines.len()
+                        && insert_lines
+                            .iter()
+                            .take(marker_lines.len())
+                            .map(|s| s.trim())
+                            .eq(marker_lines.iter().map(|s| s.trim()))
+                    {
+                        insert_lines = insert_lines.into_iter().skip(marker_lines.len()).collect();
+                    }
+
                     let mut new_lines = file_lines[..index].to_vec();
-                    new_lines.extend(insert_lines.lines().iter().cloned());
+                    new_lines.extend(insert_lines.clone());
                     new_lines.extend(file_lines[index..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
@@ -204,8 +218,22 @@ fn main() -> Result<()> {
                         change.filename.display()
                     );
                 } else if let Some(index) = find_in_file_lines(&file_lines, &marker_lines.lines()) {
+                    let mut insert_lines = insert_lines.lines();
+                    let marker_lines = marker_lines.lines();
+
+                    // Remove marker lines from insert_lines if they match
+                    if insert_lines.len() >= marker_lines.len()
+                        && insert_lines
+                            .iter()
+                            .take(marker_lines.len())
+                            .map(|s| s.trim())
+                            .eq(marker_lines.iter().map(|s| s.trim()))
+                    {
+                        insert_lines = insert_lines.into_iter().skip(marker_lines.len()).collect();
+                    }
+
                     let mut new_lines = file_lines[..=index + marker_lines.len() - 1].to_vec();
-                    new_lines.extend(insert_lines.lines().iter().cloned());
+                    new_lines.extend(insert_lines.clone());
                     new_lines.extend(file_lines[index + marker_lines.len()..].iter().cloned());
                     fs::write(&change.filename, new_lines.join("\n")).with_context(|| {
                         format!("✗ Failed to write to file: {:?}", change.filename)
@@ -333,13 +361,15 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     // Check if the best match meets the 95% similarity threshold
     if let Some(i) = best_match {
         let similarity = 1.0 - (min_distance as f64 / needle_len as f64);
-        println!("Best match similarity: {}", similarity);
-        println!(
-            "Best match: {:?}",
-            &file_lines[i..min(i + needle.len(), file_lines.len())]
-        );
+
         if similarity >= 0.95 {
             return Some(i);
+        } else {
+            println!("Best match similarity: {}", similarity);
+            println!(
+                "Best match: {:?}",
+                &file_lines[i..min(i + needle.len(), file_lines.len())]
+            );
         }
     }
 
