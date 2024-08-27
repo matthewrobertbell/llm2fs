@@ -328,6 +328,10 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     if let Some(i) = best_match {
         let similarity = 1.0 - (min_distance as f64 / needle_len as f64);
         println!("Best match similarity: {}", similarity);
+        println!(
+            "Best match: {:?}",
+            &file_lines[i..min(i + needle.len(), file_lines.len())]
+        );
         if similarity >= 0.95 {
             return Some(i);
         }
