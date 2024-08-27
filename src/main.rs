@@ -311,7 +311,11 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     let mut min_distance = usize::MAX;
 
     for (i, window) in file_lines.windows(needle.len()).enumerate() {
-        let window_joined = window.join("\n");
+        let window_joined = window
+            .iter()
+            .map(|s| s.trim())
+            .collect::<Vec<_>>()
+            .join("\n");
         let distance = levenshtein_distance(&needle_joined, &window_joined);
 
         if distance < min_distance {
