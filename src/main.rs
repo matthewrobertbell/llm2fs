@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
@@ -260,35 +261,82 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn is_file_in_current_directory(filename: &Path) -> bool {
-    let path = Path::new(filename);
+fn is_file_in_current_directory(path: &Path) -> bool {
     path.is_relative() && !path.starts_with("..")
+}
+
+fn levenshtein_distance(s1: &str, s2: &str) -> usize {
+    let len1 = s1.chars().count();
+    let len2 = s2.chars().count();
+    let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
+
+    for (i, row) in matrix.iter_mut().enumerate() {
+        row[0] = i;
+    }
+    for j in 0..=len2 {
+        matrix[0][j] = j;
+    }
+
+    for (i, c1) in s1.chars().enumerate() {
+        for (j, c2) in s2.chars().enumerate() {
+            let cost = if c1 == c2 { 0 } else { 1 };
+            matrix[i + 1][j + 1] = min(
+                min(matrix[i][j + 1] + 1, matrix[i + 1][j] + 1),
+                matrix[i][j] + cost,
+            );
+        }
+    }
+
+    matrix[len1][len2]
 }
 
 fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize> {
     let non_empty_needle: Vec<_> = needle
         .iter()
-        .map(|s| unescape(s.trim()))
+        .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .collect();
+
     if non_empty_needle.is_empty() {
         return Some(0);
     }
 
     let non_empty_file_lines: Vec<_> = file_lines
         .iter()
-        .map(|s| s.trim().to_string())
+        .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .collect();
+
     if non_empty_needle.len() > non_empty_file_lines.len() {
         return None;
     }
+
+    let needle_joined = non_empty_needle.join("\n");
+    let needle_len = needle_joined.chars().count();
+    let mut best_match = None;
+    let mut min_distance = usize::MAX;
 
     for (i, window) in non_empty_file_lines
         .windows(non_empty_needle.len())
         .enumerate()
     {
-        if window == non_empty_needle {
+        let window_joined = window.join("\n");
+        let distance = levenshtein_distance(&needle_joined, &window_joined);
+
+        if distance < min_distance {
+            min_distance = distance;
+            best_match = Some(i);
+        }
+
+        if distance == 0 {
+            break; // Exact match found
+        }
+    }
+
+    // Check if the best match meets the 95% similarity threshold
+    if let Some(i) = best_match {
+        let similarity = 1.0 - (min_distance as f64 / needle_len as f64);
+        if similarity >= 0.95 {
             return Some(
                 file_lines
                     .iter()
@@ -300,30 +348,4 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     }
 
     None
-}
-
-fn unescape(s: &str) -> String {
-    let mut chars = s.chars();
-    let mut result = String::new();
-    while let Some(c) = chars.next() {
-        if c == '\\' {
-            if let Some(next) = chars.next() {
-                match next {
-                    'n' => result.push('\n'),
-                    'r' => result.push('\r'),
-                    't' => result.push('\t'),
-                    '\\' => result.push('\\'),
-                    _ => {
-                        result.push('\\');
-                        result.push(next);
-                    }
-                }
-            } else {
-                result.push('\\');
-            }
-        } else {
-            result.push(c);
-        }
-    }
-    result
 }
