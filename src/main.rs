@@ -221,6 +221,9 @@ fn main() -> Result<()> {
                     let mut insert_lines = insert_lines.lines();
                     let marker_lines = marker_lines.lines();
 
+                    dbg!(&insert_lines);
+                    dbg!(&marker_lines);
+
                     // Remove marker lines from insert_lines if they match
                     if insert_lines.len() >= marker_lines.len()
                         && insert_lines
