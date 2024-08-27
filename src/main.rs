@@ -230,6 +230,8 @@ fn main() -> Result<()> {
                     .map(String::from)
                     .collect::<Vec<_>>();
 
+                dbg!(&delete_lines.lines());
+
                 if let Some(start_index) = find_in_file_lines(&file_lines, &delete_lines.lines()) {
                     let mut new_lines = file_lines[..start_index].to_vec();
                     new_lines.extend(
@@ -336,6 +338,7 @@ fn find_in_file_lines(file_lines: &[String], needle: &[String]) -> Option<usize>
     // Check if the best match meets the 95% similarity threshold
     if let Some(i) = best_match {
         let similarity = 1.0 - (min_distance as f64 / needle_len as f64);
+        println!("Best match similarity: {}", similarity);
         if similarity >= 0.95 {
             return Some(
                 file_lines
